@@ -1,3 +1,5 @@
+# This has been modified by Jace Roldan for instructional purposes: HQZen Internship 2023.
+
 # todo-vue
 
 Sample todo app built with the Vue framework.
