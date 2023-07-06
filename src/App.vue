@@ -21,7 +21,8 @@
 <script>
 import ToDoItem from "./components/ToDoItem.vue";
 import ToDoForm from "./components/ToDoForm.vue";
-import uniqueId from "lodash.uniqueid";
+import axios from 'axios';
+// import uniqueId from "lodash.uniqueid";
 
 export default {
   name: "app",
@@ -32,37 +33,63 @@ export default {
   data() {
     return {
       ToDoItems: [
-        { id: uniqueId("todo-"), label: "Learn Vue", done: false },
-        {
-          id: uniqueId("todo-"),
-          label: "Create a Vue project with the CLI",
-          done: true,
-        },
-        { id: uniqueId("todo-"), label: "Have fun", done: true },
-        { id: uniqueId("todo-"), label: "Create a to-do list", done: false },
+        // { id: uniqueId("todo-"), label: "Learn Vue", done: false },
+        // {
+        //   id: uniqueId("todo-"),
+        //   label: "Create a Vue project with the CLI",
+        //   done: true,
+        // },
+        // { id: uniqueId("todo-"), label: "Have fun", done: true },
+        // { id: uniqueId("todo-"), label: "Create a to-do list", done: false },
       ],
     };
   },
+
+  // lifecycle hook
+  created() {
+    axios.get('http://localhost:8000/api-sileo/v1/bposeats/todo-item/filter/')
+      .then(response => {
+        this.ToDoItems = response.data.data;
+      });
+  },
+
   methods: {
     addToDo(toDoLabel) {
-      this.ToDoItems.push({
-        id: uniqueId("todo-"),
-        label: toDoLabel,
-        done: false,
-      });
+      const form = new FormData();
+      form.append('label', toDoLabel)
+
+      axios.post('http://localhost:8000/api-sileo/v1/bposeats/todo-item/create/', form)
+        .then(response => {
+          const newItem = response.data.data;
+          this.ToDoItems.push(newItem);
+        })
     },
     updateDoneStatus(toDoId) {
       const toDoToUpdate = this.ToDoItems.find((item) => item.id === toDoId);
-      toDoToUpdate.done = !toDoToUpdate.done;
+      const form = new FormData();
+      form.append('label', toDoToUpdate.label);
+      form.append('done', !toDoToUpdate.done);
+      axios.post('http://localhost:8000/api-sileo/v1/bposeats/todo-item/update/?id=' + toDoToUpdate.id, form)
+        .then(() => {
+          toDoToUpdate.done = !toDoToUpdate.done;
+        });
     },
     deleteToDo(toDoId) {
       const itemIndex = this.ToDoItems.findIndex((item) => item.id === toDoId);
-      this.ToDoItems.splice(itemIndex, 1);
-      this.$refs.listSummary.focus();
+      axios.post('http://localhost:8000/api-sileo/v1/bposeats/todo-item/delete/?id=' + this.ToDoItems[itemIndex].id)
+        .then(() => {
+          this.ToDoItems.splice(itemIndex, 1);
+          this.$refs.listSummary.focus();
+        });
     },
     editToDo(toDoId, newLabel) {
       const toDoToEdit = this.ToDoItems.find((item) => item.id === toDoId);
-      toDoToEdit.label = newLabel;
+      const form = new FormData();
+      form.append('label', newLabel);
+      axios.post('http://localhost:8000/api-sileo/v1/bposeats/todo-item/update/?id=' + toDoToEdit.id, form)
+        .then(() => {
+          toDoToEdit.label = newLabel;
+        });
     },
   },
   computed: {
